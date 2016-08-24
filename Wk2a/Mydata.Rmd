@@ -1,0 +1,81 @@
+---
+title: 'Reproducible Research: Course Project 1'
+output: html_document
+---
+
+1) Loading of data,preprocessing data, splitting data by date and plotting by 
+a histogram of total number of steps taken each day
+
+```{r, echo=TRUE}
+data = read.csv('activity.csv')
+databydate = split(data,data$date)
+Result=sapply(databydate, function(x) sum(x[,1],na.rm=T))
+head(Result)
+Todataframe = data.frame(Result)
+head(Todataframe)
+hist(Todataframe$Result, xlab ='Total number of steps per day', main='Histogram')
+```
+
+2) Calculating the mean of total number of steps per day
+```{r, echo=TRUE}
+mean(Todataframe$Result, na.rm=T)
+```
+3) Calculating the median
+```{r,echo=TRUE}
+median(Todataframe$Result, na.rm = T)
+```
+
+4)Calculating Average daily activity pattern
+```{r,echo=TRUE}
+ByDate = split(data, data$date)
+ByInterval = split(data, data$interval)
+Result=sapply(ByInterval, function(x) mean(x[,1],na.rm=T))
+data2 = data.frame(Result)
+Name = names(Result)
+Name2 = as.numeric(as.character(Name))
+Name3 = as.data.frame(Name2)
+Newdata = cbind(Name3,data2)
+colnames(Newdata)[1]= 'Interval'
+colnames(Newdata)[2]= 'AvgDailyActivity'
+plot(Newdata, xlim=c(0,2500), ylim=c(0,250), type='l')
+a = seq(from=0, to = 2500, by = 5)
+plot(Newdata, xlim=c(0,2500), ylim=c(0,250), type='l', axes=F)
+axis(side=1, at=seq(0,2500,by= 5),labels=a )
+axis(side=2, at=seq(0,250,by= 50), labels=c('0','50','100','150','200','250'))
+box()
+```
+5) Find the maximum daily activity
+```{r,echo=TRUE}
+which.max(Newdata$AvgDailyActivity)
+Newdata[104,]
+```
+
+6) Find the number of data that has NA values
+```{r, echo=TRUE}
+colSums(is.na(data))
+```
+
+7) Are the difference in activity patterns between weekdays and weekends?
+```{r, echo=TRUE}
+Ans =mean(data$steps,na.rm=T)
+data2 = data
+data2$steps[is.na(data2$steps)] = Ans
+Byday = split (data2,data2$date)
+Result = sapply(Byday, function(x) sum(x[,1]))
+Result2 = data.frame(Result)
+hist(Result2$Result, col='red', xlab= 'Total number of steps per day', main='Histogram of Total Number of steps per day')
+data2$Weekday= weekdays(as.Date(data2$date))
+data2$Weekday[(data2$Weekday=='Monday')] = 'weekday'
+data2$Weekday[(data2$Weekday=='Tuesday')] = 'weekday'
+data2$Weekday[(data2$Weekday=='Wednesday')] = 'weekday'
+data2$Weekday[(data2$Weekday=='Thursday')] = 'weekday'
+data2$Weekday[(data2$Weekday=='Friday')] = 'weekday'
+data2$Weekday[(data2$Weekday=='Saturday')] = 'weekend'
+data2$Weekday[(data2$Weekday=='Sunday')] = 'weekend'
+data2$Weekday = factor(data2$Weekday)
+library(plyr)
+Newdata = ddply(data2,c('interval','Weekday'), function(x) apply(x[1],2,mean))
+head(Newdata)
+library(lattice)
+xyplot(steps~interval | Weekday, data= Newdata, layout=c(1,2), type='l')
+```
